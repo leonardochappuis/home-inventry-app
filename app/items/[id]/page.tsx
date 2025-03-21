@@ -267,26 +267,34 @@ export default function ItemDetailPage({
               <TabsContent value="warranty" className="mt-4">
                 <Card>
                   <CardContent className="pt-6 space-y-4">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-muted-foreground">
-                        Provider
+                    {item.warranty ? (
+                      <>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Provider
+                          </div>
+                          <div>{item.warranty.provider || 'N/A'}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Expiry Date
+                          </div>
+                          <div>{formatDateOrNA(item.warranty.expiryDate)}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Details
+                          </div>
+                          <div className="whitespace-pre-wrap">
+                            {item.warranty.details || 'N/A'}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-muted-foreground py-4">
+                        No warranty available
                       </div>
-                      <div>{item.warranty?.provider || 'N/A'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-muted-foreground">
-                        Expiry Date
-                      </div>
-                      <div>{formatDateOrNA(item.warranty?.expiryDate)}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-muted-foreground">
-                        Details
-                      </div>
-                      <div className="whitespace-pre-wrap">
-                        {item.warranty?.details || 'N/A'}
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

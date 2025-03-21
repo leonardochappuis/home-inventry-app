@@ -224,6 +224,16 @@ export default function AddItemPage() {
 
   // Updated handleSubmit function to use form validation
   const onSubmit = (data: ItemFormValues) => {
+    // Create warranty object only if any warranty field has a value
+    const warranty =
+      data.warrantyProvider || data.warrantyExpiry || data.warrantyDetails
+        ? {
+            provider: data.warrantyProvider || '',
+            expiryDate: data.warrantyExpiry || '',
+            details: data.warrantyDetails || '',
+          }
+        : undefined;
+
     // Create new item object
     const newItem = {
       name: data.name,
@@ -235,11 +245,7 @@ export default function AddItemPage() {
       location: data.location || '',
       serialNumber: data.serialNumber || '',
       model: data.model || '',
-      warranty: {
-        provider: data.warrantyProvider || 'N/A',
-        expiryDate: data.warrantyExpiry || 'N/A',
-        details: data.warrantyDetails || 'N/A',
-      },
+      warranty,
       notes: data.notes || '',
       images:
         images.length > 0
