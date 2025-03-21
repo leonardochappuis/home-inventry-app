@@ -27,6 +27,7 @@ import {
   Eye,
   Link2,
   Home,
+  Download,
 } from 'lucide-react';
 import type { Item } from '@/lib/types';
 import { useInventory } from '@/lib/inventory-context';
@@ -283,9 +284,7 @@ export default function ItemDetailPage({
                         </div>
                       </>
                     ) : (
-                      <div className="text-muted-foreground py-4">
-                        No warranty information available.
-                      </div>
+                      <div className="text-muted-foreground py-4">N/A</div>
                     )}
                   </CardContent>
                 </Card>
@@ -332,11 +331,11 @@ export default function ItemDetailPage({
                               {receipt.file ? (
                                 <a
                                   href={receipt.file}
-                                  target="_blank"
+                                  download={`${receipt.name || 'receipt'}`}
                                   rel="noopener noreferrer"
                                 >
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
                                 </a>
                               ) : (
                                 <Link href={receipt.url}>
