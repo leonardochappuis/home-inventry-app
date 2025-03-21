@@ -282,11 +282,16 @@ export default function EditItemPage({
       location: formData.location,
       serialNumber: formData.serialNumber,
       model: formData.model,
-      warranty: {
-        provider: formData.warrantyProvider,
-        expiryDate: formData.warrantyExpiry,
-        details: formData.warrantyDetails,
-      },
+      warranty:
+        formData.warrantyProvider ||
+        formData.warrantyExpiry ||
+        formData.warrantyDetails
+          ? {
+              provider: formData.warrantyProvider || '',
+              expiryDate: formData.warrantyExpiry || '',
+              details: formData.warrantyDetails || '',
+            }
+          : undefined,
       notes: formData.notes,
       images: images,
       receipts: receipts,
