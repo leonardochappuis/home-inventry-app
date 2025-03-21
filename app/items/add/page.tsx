@@ -1,195 +1,226 @@
-"use client"
+'use client';
 
-import type React from "react"
-import { useState, useRef } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, X, Camera, Image, FileText, Link2, Eye, Trash, Upload } from "lucide-react"
-import { useInventory } from "@/lib/inventory-context"
-import { useToast } from "@/hooks/use-toast"
-import { itemFormSchema, type ItemFormValues } from "@/lib/validations/item"
-import type { Receipt } from "@/lib/types"
+import type React from 'react';
+import { useState, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  ArrowLeft,
+  X,
+  Camera,
+  Image,
+  FileText,
+  Link2,
+  Trash,
+  Upload,
+  Download,
+} from 'lucide-react';
+import { useInventory } from '@/lib/inventory-context';
+import { useToast } from '@/hooks/use-toast';
+import { itemFormSchema, type ItemFormValues } from '@/lib/validations/item';
+import type { Receipt } from '@/lib/types';
 
 // Placeholder images for different categories
 const placeholderImages = {
   Electronics: [
-    "/placeholder.svg?height=400&width=600&text=Electronics+1",
-    "/placeholder.svg?height=400&width=600&text=Electronics+2",
-    "/placeholder.svg?height=400&width=600&text=Electronics+3",
+    '/placeholder.svg?height=400&width=600&text=Electronics+1',
+    '/placeholder.svg?height=400&width=600&text=Electronics+2',
+    '/placeholder.svg?height=400&width=600&text=Electronics+3',
   ],
   Furniture: [
-    "/placeholder.svg?height=400&width=600&text=Furniture+1",
-    "/placeholder.svg?height=400&width=600&text=Furniture+2",
-    "/placeholder.svg?height=400&width=600&text=Furniture+3",
+    '/placeholder.svg?height=400&width=600&text=Furniture+1',
+    '/placeholder.svg?height=400&width=600&text=Furniture+2',
+    '/placeholder.svg?height=400&width=600&text=Furniture+3',
   ],
   Appliances: [
-    "/placeholder.svg?height=400&width=600&text=Appliances+1",
-    "/placeholder.svg?height=400&width=600&text=Appliances+2",
-    "/placeholder.svg?height=400&width=600&text=Appliances+3",
+    '/placeholder.svg?height=400&width=600&text=Appliances+1',
+    '/placeholder.svg?height=400&width=600&text=Appliances+2',
+    '/placeholder.svg?height=400&width=600&text=Appliances+3',
   ],
   Jewelry: [
-    "/placeholder.svg?height=400&width=600&text=Jewelry+1",
-    "/placeholder.svg?height=400&width=600&text=Jewelry+2",
-    "/placeholder.svg?height=400&width=600&text=Jewelry+3",
+    '/placeholder.svg?height=400&width=600&text=Jewelry+1',
+    '/placeholder.svg?height=400&width=600&text=Jewelry+2',
+    '/placeholder.svg?height=400&width=600&text=Jewelry+3',
   ],
   Art: [
-    "/placeholder.svg?height=400&width=600&text=Art+1",
-    "/placeholder.svg?height=400&width=600&text=Art+2",
-    "/placeholder.svg?height=400&width=600&text=Art+3",
+    '/placeholder.svg?height=400&width=600&text=Art+1',
+    '/placeholder.svg?height=400&width=600&text=Art+2',
+    '/placeholder.svg?height=400&width=600&text=Art+3',
   ],
   Clothing: [
-    "/placeholder.svg?height=400&width=600&text=Clothing+1",
-    "/placeholder.svg?height=400&width=600&text=Clothing+2",
-    "/placeholder.svg?height=400&width=600&text=Clothing+3",
+    '/placeholder.svg?height=400&width=600&text=Clothing+1',
+    '/placeholder.svg?height=400&width=600&text=Clothing+2',
+    '/placeholder.svg?height=400&width=600&text=Clothing+3',
   ],
   Default: [
-    "/placeholder.svg?height=400&width=600&text=Item+1",
-    "/placeholder.svg?height=400&width=600&text=Item+2",
-    "/placeholder.svg?height=400&width=600&text=Item+3",
+    '/placeholder.svg?height=400&width=600&text=Item+1',
+    '/placeholder.svg?height=400&width=600&text=Item+2',
+    '/placeholder.svg?height=400&width=600&text=Item+3',
   ],
-}
+};
 
 export default function AddItemPage() {
-  const router = useRouter()
-  const { addItem, categories } = useInventory()
-  const { toast } = useToast()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const receiptFileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter();
+  const { addItem, categories } = useInventory();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const receiptFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [images, setImages] = useState<string[]>([])
-  const [receipts, setReceipts] = useState<Receipt[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [showPlaceholders, setShowPlaceholders] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string>("Default")
+  const [images, setImages] = useState<string[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [showPlaceholders, setShowPlaceholders] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Default');
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
-      name: "",
-      category: "",
-      description: "",
-      purchaseDate: "",
+      name: '',
+      category: '',
+      description: '',
+      purchaseDate: '',
       purchasePrice: 0,
       currentValue: 0,
-      location: "",
-      serialNumber: "",
-      model: "",
-      warrantyProvider: "",
-      warrantyExpiry: "",
-      warrantyDetails: "",
-      notes: "",
+      location: '',
+      serialNumber: '',
+      model: '',
+      warrantyProvider: '',
+      warrantyExpiry: '',
+      warrantyDetails: '',
+      notes: '',
     },
-  })
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setUploading(true)
+    setUploading(true);
 
     // Process each file
     Array.from(files).forEach((file) => {
-      const reader = new FileReader()
+      const reader = new FileReader();
 
       reader.onload = (event) => {
-        if (event.target && typeof event.target.result === "string") {
-          setImages((prev) => [...prev, event.target.result])
+        if (event.target && typeof event.target.result === 'string') {
+          setImages((prev) => [...prev, event.target.result]);
         }
-      }
+      };
 
-      reader.readAsDataURL(file)
-    })
+      reader.readAsDataURL(file);
+    });
 
     // Reset the file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+      fileInputRef.current.value = '';
     }
 
-    setUploading(false)
+    setUploading(false);
 
     toast({
-      title: "Images uploaded",
-      description: "Your images have been added successfully.",
-    })
-  }
+      title: 'Images uploaded',
+      description: 'Your images have been added successfully.',
+    });
+  };
 
   const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setUploading(true)
+    setUploading(true);
 
     // Process each file
     Array.from(files).forEach((file) => {
-      const reader = new FileReader()
+      const reader = new FileReader();
 
       reader.onload = (event) => {
-        if (event.target && typeof event.target.result === "string") {
+        if (event.target && typeof event.target.result === 'string') {
           const newReceipt = {
-            id: `receipt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: `receipt-${Date.now()}-${Math.random()
+              .toString(36)
+              .substr(2, 9)}`,
             name: file.name,
-            date: new Date().toISOString().split("T")[0],
-            url: "#",
+            date: new Date().toISOString().split('T')[0],
+            url: '#',
             file: event.target.result,
-          }
-          setReceipts((prev) => [...prev, newReceipt])
+          };
+          setReceipts((prev) => [...prev, newReceipt]);
         }
-      }
+      };
 
-      reader.readAsDataURL(file)
-    })
+      reader.readAsDataURL(file);
+    });
 
     // Reset the file input
     if (receiptFileInputRef.current) {
-      receiptFileInputRef.current.value = ""
+      receiptFileInputRef.current.value = '';
     }
 
-    setUploading(false)
+    setUploading(false);
 
     toast({
-      title: "Receipt uploaded",
-      description: "Your receipt has been added successfully.",
-    })
-  }
+      title: 'Receipt uploaded',
+      description: 'Your receipt has been added successfully.',
+    });
+  };
 
   const triggerFileInput = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.click()
+      fileInputRef.current.click();
     }
-  }
+  };
 
   const triggerReceiptFileInput = () => {
     if (receiptFileInputRef.current) {
-      receiptFileInputRef.current.click()
+      receiptFileInputRef.current.click();
     }
-  }
+  };
 
   const addPlaceholderImage = (image: string) => {
-    setImages((prev) => [...prev, image])
-    setShowPlaceholders(false)
+    setImages((prev) => [...prev, image]);
+    setShowPlaceholders(false);
 
     toast({
-      title: "Placeholder added",
-      description: "Placeholder image has been added to your item.",
-    })
-  }
+      title: 'Placeholder added',
+      description: 'Placeholder image has been added to your item.',
+    });
+  };
 
   const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
+    setImages(images.filter((_, i) => i !== index));
+  };
 
   const removeReceipt = (id: string) => {
-    setReceipts(receipts.filter((receipt) => receipt.id !== id))
-  }
+    setReceipts(receipts.filter((receipt) => receipt.id !== id));
+  };
 
   // Updated handleSubmit function to use form validation
   const onSubmit = (data: ItemFormValues) => {
@@ -197,36 +228,39 @@ export default function AddItemPage() {
     const newItem = {
       name: data.name,
       category: data.category,
-      description: data.description || "",
+      description: data.description || '',
       purchaseDate: data.purchaseDate,
       purchasePrice: Number(data.purchasePrice),
       currentValue: Number(data.currentValue || data.purchasePrice),
-      location: data.location || "",
-      serialNumber: data.serialNumber || "",
-      model: data.model || "",
+      location: data.location || '',
+      serialNumber: data.serialNumber || '',
+      model: data.model || '',
       warranty: {
-        provider: data.warrantyProvider || "",
-        expiryDate: data.warrantyExpiry || "",
-        details: data.warrantyDetails || "",
+        provider: data.warrantyProvider || 'N/A',
+        expiryDate: data.warrantyExpiry || 'N/A',
+        details: data.warrantyDetails || 'N/A',
       },
-      notes: data.notes || "",
-      images: images.length > 0 ? images : ["/placeholder.svg?height=400&width=600&text=No+Image"],
+      notes: data.notes || '',
+      images:
+        images.length > 0
+          ? images
+          : ['/placeholder.svg?height=400&width=600&text=No+Image'],
       receipts: receipts,
-    }
+    };
 
     // Add the item
-    const id = addItem(newItem)
+    const id = addItem(newItem);
 
     toast({
-      title: "Item added",
-      description: "Your item has been added successfully.",
-    })
+      title: 'Item added',
+      description: 'Your item has been added successfully.',
+    });
 
     // Use router.push with a slight delay to ensure state is updated before navigation
     setTimeout(() => {
-      router.push(`/items/${id}`)
-    }, 100)
-  }
+      router.push(`/items/${id}`);
+    }, 100);
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -247,7 +281,9 @@ export default function AddItemPage() {
               <Card className="order-2 md:order-1">
                 <CardHeader>
                   <CardTitle>Item Details</CardTitle>
-                  <CardDescription>Enter the details of your item</CardDescription>
+                  <CardDescription>
+                    Enter the details of your item
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -257,7 +293,10 @@ export default function AddItemPage() {
                       <FormItem>
                         <FormLabel>Item Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. MacBook Pro 16&quot;" {...field} />
+                          <Input
+                            placeholder='e.g. MacBook Pro 16"'
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -272,8 +311,8 @@ export default function AddItemPage() {
                         <FormLabel>Category</FormLabel>
                         <Select
                           onValueChange={(value) => {
-                            field.onChange(value)
-                            setSelectedCategory(value)
+                            field.onChange(value);
+                            setSelectedCategory(value);
                           }}
                           defaultValue={field.value}
                         >
@@ -284,7 +323,10 @@ export default function AddItemPage() {
                           </FormControl>
                           <SelectContent>
                             {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <SelectItem
+                                key={category.id}
+                                value={category.name}
+                              >
                                 {category.name}
                               </SelectItem>
                             ))}
@@ -307,7 +349,7 @@ export default function AddItemPage() {
                               type="date"
                               {...field}
                               className="h-10"
-                              max={new Date().toISOString().split("T")[0]} // Prevent future dates
+                              max={new Date().toISOString().split('T')[0]} // Prevent future dates
                             />
                           </FormControl>
                           <FormMessage />
@@ -328,8 +370,8 @@ export default function AddItemPage() {
                               step="0.01"
                               {...field}
                               onChange={(e) => {
-                                const value = e.target.value
-                                field.onChange(value)
+                                const value = e.target.value;
+                                field.onChange(value);
                               }}
                             />
                           </FormControl>
@@ -353,8 +395,8 @@ export default function AddItemPage() {
                             placeholder="Leave blank to use purchase price"
                             {...field}
                             onChange={(e) => {
-                              const value = e.target.value
-                              field.onChange(value)
+                              const value = e.target.value;
+                              field.onChange(value);
                             }}
                           />
                         </FormControl>
@@ -402,7 +444,10 @@ export default function AddItemPage() {
                       <FormItem>
                         <FormLabel>Location</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Living Room, Garage" {...field} />
+                          <Input
+                            placeholder="e.g. Living Room, Garage"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -416,7 +461,10 @@ export default function AddItemPage() {
                       <FormItem>
                         <FormLabel>Model</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. MacBook Pro 16-inch 2023" {...field} />
+                          <Input
+                            placeholder="e.g. MacBook Pro 16-inch 2023"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -429,7 +477,9 @@ export default function AddItemPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Item Images</CardTitle>
-                    <CardDescription>Upload photos of your item</CardDescription>
+                    <CardDescription>
+                      Upload photos of your item
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {/* Hidden file input */}
@@ -444,9 +494,12 @@ export default function AddItemPage() {
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       {images.map((image, index) => (
-                        <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-md overflow-hidden border"
+                        >
                           <img
-                            src={image || "/placeholder.svg"}
+                            src={image || '/placeholder.svg'}
                             alt={`Item image ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
@@ -465,23 +518,27 @@ export default function AddItemPage() {
 
                     {showPlaceholders ? (
                       <div className="space-y-4">
-                        <h3 className="font-medium text-sm">Select a placeholder image:</h3>
+                        <h3 className="font-medium text-sm">
+                          Select a placeholder image:
+                        </h3>
                         <div className="grid grid-cols-2 gap-4">
-                          {placeholderImages[selectedCategory in placeholderImages ? selectedCategory : "Default"].map(
-                            (image, index) => (
-                              <div
-                                key={index}
-                                className="relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:border-primary"
-                                onClick={() => addPlaceholderImage(image)}
-                              >
-                                <img
-                                  src={image || "/placeholder.svg"}
-                                  alt={`Placeholder ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ),
-                          )}
+                          {placeholderImages[
+                            selectedCategory in placeholderImages
+                              ? selectedCategory
+                              : 'Default'
+                          ].map((image, index) => (
+                            <div
+                              key={index}
+                              className="relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:border-primary"
+                              onClick={() => addPlaceholderImage(image)}
+                            >
+                              <img
+                                src={image || '/placeholder.svg'}
+                                alt={`Placeholder ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
                         </div>
                         <Button
                           type="button"
@@ -509,7 +566,9 @@ export default function AddItemPage() {
                           ) : (
                             <div className="flex flex-col items-center">
                               <Image className="h-5 w-5 mb-1" />
-                              <span className="text-sm">Upload from Device</span>
+                              <span className="text-sm">
+                                Upload from Device
+                              </span>
                             </div>
                           )}
                         </Button>
@@ -532,7 +591,9 @@ export default function AddItemPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Warranty Information</CardTitle>
-                    <CardDescription>Add warranty details if applicable</CardDescription>
+                    <CardDescription>
+                      Add warranty details if applicable
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -570,7 +631,11 @@ export default function AddItemPage() {
                         <FormItem>
                           <FormLabel>Details</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Additional warranty information" rows={2} {...field} />
+                            <Textarea
+                              placeholder="Additional warranty information"
+                              rows={2}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -582,7 +647,9 @@ export default function AddItemPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Receipts</CardTitle>
-                    <CardDescription>Upload receipts for this item</CardDescription>
+                    <CardDescription>
+                      Upload receipts for this item
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {/* Hidden file input for receipts */}
@@ -598,7 +665,10 @@ export default function AddItemPage() {
                       {receipts.length > 0 ? (
                         <div className="border rounded-md divide-y">
                           {receipts.map((receipt) => (
-                            <div key={receipt.id} className="flex items-center justify-between p-3">
+                            <div
+                              key={receipt.id}
+                              className="flex items-center justify-between p-3"
+                            >
                               <div className="flex items-center gap-3">
                                 {receipt.file ? (
                                   <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
@@ -610,22 +680,34 @@ export default function AddItemPage() {
                                   </div>
                                 )}
                                 <div>
-                                  <p className="font-medium text-sm">{receipt.name}</p>
+                                  <p className="font-medium text-sm">
+                                    {receipt.name}
+                                  </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {new Date(receipt.date).toLocaleDateString()}
+                                    {new Date(
+                                      receipt.date
+                                    ).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 {receipt.file && (
                                   <Button variant="ghost" size="icon" asChild>
-                                    <a href={receipt.file} target="_blank" rel="noopener noreferrer">
-                                      <Eye className="h-4 w-4" />
-                                      <span className="sr-only">View</span>
+                                    <a
+                                      href={receipt.file}
+                                      download={`${receipt.name || 'receipt'}`}
+                                      rel="noopener noreferrer"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                      <span className="sr-only">Download</span>
                                     </a>
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="icon" onClick={() => removeReceipt(receipt.id)}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeReceipt(receipt.id)}
+                                >
                                   <Trash className="h-4 w-4" />
                                   <span className="sr-only">Delete</span>
                                 </Button>
@@ -634,10 +716,17 @@ export default function AddItemPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">No receipts added yet</p>
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No receipts added yet
+                        </p>
                       )}
 
-                      <Button type="button" variant="outline" className="w-full" onClick={triggerReceiptFileInput}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={triggerReceiptFileInput}
+                      >
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Receipt
                       </Button>
@@ -648,7 +737,9 @@ export default function AddItemPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Notes</CardTitle>
-                    <CardDescription>Additional information about this item</CardDescription>
+                    <CardDescription>
+                      Additional information about this item
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <FormField
@@ -657,7 +748,11 @@ export default function AddItemPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Textarea placeholder="Add any additional notes about this item..." rows={4} {...field} />
+                            <Textarea
+                              placeholder="Add any additional notes about this item..."
+                              rows={4}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -678,6 +773,5 @@ export default function AddItemPage() {
         </Form>
       </main>
     </div>
-  )
+  );
 }
-

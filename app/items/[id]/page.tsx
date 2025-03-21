@@ -75,6 +75,21 @@ export default function ItemDetailPage({
     router.push(`/items/${itemId}/edit`);
   };
 
+  // Helper function to format date or return N/A
+  const formatDateOrNA = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+
+    // Try to create a valid date
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+
+    return date.toLocaleDateString();
+  };
+
   if (!item) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center">
@@ -190,9 +205,7 @@ export default function ItemDetailPage({
                       <Calendar className="mr-2 h-4 w-4" />
                       Purchase Date
                     </div>
-                    <div>
-                      {new Date(item.purchaseDate).toLocaleDateString()}
-                    </div>
+                    <div>{formatDateOrNA(item.purchaseDate)}</div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm font-medium text-muted-foreground flex items-center">
@@ -266,13 +279,7 @@ export default function ItemDetailPage({
                           <div className="text-sm font-medium text-muted-foreground">
                             Expiry Date
                           </div>
-                          <div>
-                            {item.warranty.expiryDate
-                              ? new Date(
-                                  item.warranty.expiryDate
-                                ).toLocaleDateString()
-                              : 'N/A'}
-                          </div>
+                          <div>{formatDateOrNA(item.warranty.expiryDate)}</div>
                         </div>
                         <div className="space-y-1">
                           <div className="text-sm font-medium text-muted-foreground">
@@ -284,7 +291,9 @@ export default function ItemDetailPage({
                         </div>
                       </>
                     ) : (
-                      <div className="text-muted-foreground py-4">N/A</div>
+                      <div className="text-muted-foreground py-4">
+                        No warranty information available.
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -314,11 +323,7 @@ export default function ItemDetailPage({
                                   {receipt.name || 'N/A'}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {receipt.date
-                                    ? new Date(
-                                        receipt.date
-                                      ).toLocaleDateString()
-                                    : 'N/A'}
+                                  {formatDateOrNA(receipt.date)}
                                 </div>
                               </div>
                             </div>
@@ -338,10 +343,14 @@ export default function ItemDetailPage({
                                   Download
                                 </a>
                               ) : (
-                                <Link href={receipt.url}>
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  View
-                                </Link>
+                                <a
+                                  href={receipt.url}
+                                  download={`${receipt.name || 'receipt'}`}
+                                  rel="noopener noreferrer"
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                </a>
                               )}
                             </Button>
                           </div>
