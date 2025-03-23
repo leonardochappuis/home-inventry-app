@@ -17,7 +17,7 @@ export function AddItemButton({ className, variant = "default", children }: AddI
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    e.stopPropagation() // Add this to prevent event bubbling
+    e.stopPropagation() // Added to to prevent event bubbling
     router.push("/items/add")
   }
 

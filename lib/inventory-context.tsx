@@ -3,7 +3,21 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import type { Item, Category } from "@/lib/types"
 
-// Mock initial data
+// Predefined categories
+const predefinedCategories = [
+  { id: "1", name: "Electronics", itemCount: 42 },
+  { id: "2", name: "Furniture", itemCount: 18 },
+  { id: "3", name: "Appliances", itemCount: 15 },
+  { id: "4", name: "Jewelry", itemCount: 8 },
+  { id: "5", name: "Art", itemCount: 12 },
+  { id: "6", name: "Clothing", itemCount: 35 },
+  { id: "7", name: "Books", itemCount: 27 },
+  { id: "8", name: "Tools", itemCount: 19 },
+  { id: "9", name: "Sports Equipment", itemCount: 14 },
+  { id: "10", name: "Collectibles", itemCount: 23 },
+]
+
+// Initial data
 const initialItems = [
   {
     id: "1",
@@ -21,14 +35,6 @@ const initialItems = [
       expiryDate: "2026-01-15",
       details: "Extended warranty with accidental damage coverage",
     },
-    receipts: [
-      {
-        id: "r1",
-        name: "Original Purchase Receipt",
-        date: "2023-01-15",
-        url: "#",
-      },
-    ],
     notes: "Used for work and personal projects. Includes charger and protective case.",
     images: [
       "/placeholder.svg?height=400&width=600",
@@ -58,30 +64,13 @@ const initialItems = [
   },
 ]
 
-// Initial categories
-const initialCategories = [
-  { id: "1", name: "Electronics", itemCount: 42 },
-  { id: "2", name: "Furniture", itemCount: 18 },
-  { id: "3", name: "Appliances", itemCount: 15 },
-  { id: "4", name: "Jewelry", itemCount: 8 },
-  { id: "5", name: "Art", itemCount: 12 },
-  { id: "6", name: "Clothing", itemCount: 35 },
-  { id: "7", name: "Books", itemCount: 27 },
-  { id: "8", name: "Tools", itemCount: 19 },
-  { id: "9", name: "Sports Equipment", itemCount: 14 },
-  { id: "10", name: "Collectibles", itemCount: 23 },
-]
-
 interface InventoryContextType {
   items: Item[]
   categories: Category[]
   getItem: (id: string) => Item | undefined
   addItem: (item: Omit<Item, "id">) => string
-  updateItem: (id: string, item: Partial<Item>) => void
   deleteItem: (id: string) => void
-  addCategory: (name: string) => void
-  updateCategory: (id: string, name: string) => void
-  deleteCategory: (id: string) => void
+  restoreItem: (item: Item) => void
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined)
@@ -91,9 +80,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {
-    // In a real app, you would fetch this data from an API or local storage
     setItems(initialItems)
-    setCategories(initialCategories)
+    setCategories(predefinedCategories)
   }, [])
 
   const getItem = (id: string) => {
@@ -102,7 +90,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   const addItem = (item: Omit<Item, "id">) => {
     const id = `item-${Date.now()}`
-    const newItem = { ...item, id }
+    const newItem = { ...item, id } as Item
     setItems((prev) => [...prev, newItem])
 
     // Update the item count for the category
@@ -111,27 +99,24 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     return id
   }
 
-  const updateItem = (id: string, updatedFields: Partial<Item>) => {
-    const item = items.find((item) => item.id === id)
-
-    // If category changed, update category item counts
-    if (item && updatedFields.category && updatedFields.category !== item.category) {
-      updateCategoryItemCount(item.category, -1) // Decrease old category count
-      updateCategoryItemCount(updatedFields.category, 1) // Increase new category count
-    }
-
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updatedFields } : item)))
-  }
-
   const deleteItem = (id: string) => {
     const item = items.find((item) => item.id === id)
 
-    // Update category item count when deleting an item
     if (item) {
+      // Update category item count when deleting an item
       updateCategoryItemCount(item.category, -1)
-    }
 
-    setItems((prev) => prev.filter((item) => item.id !== id))
+      // Remove the item from the list
+      setItems((prev) => prev.filter((item) => item.id !== id))
+    }
+  }
+
+  const restoreItem = (item: Item) => {
+    // Add the item back to the list
+    setItems((prev) => [...prev, item])
+
+    // Update the category count
+    updateCategoryItemCount(item.category, 1)
   }
 
   // Helper function to update category item counts
@@ -141,36 +126,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  // Category management functions
-  const addCategory = (name: string) => {
-    const newCategory = {
-      id: `cat-${Date.now()}`,
-      name: name,
-      itemCount: 0,
-    }
-    setCategories((prev) => [...prev, newCategory])
-  }
-
-  const updateCategory = (id: string, name: string) => {
-    const category = categories.find((cat) => cat.id === id)
-
-    if (category && name !== category.name) {
-      // Update all items that use this category
-      setItems((prev) => prev.map((item) => (item.category === category.name ? { ...item, category: name } : item)))
-
-      // Update the category name
-      setCategories((prev) => prev.map((cat) => (cat.id === id ? { ...cat, name: name } : cat)))
-    }
-  }
-
-  const deleteCategory = (id: string) => {
-    // Only allow deletion if no items are using this category
-    const category = categories.find((cat) => cat.id === id)
-    if (category && category.itemCount === 0) {
-      setCategories((prev) => prev.filter((cat) => cat.id !== id))
-    }
-  }
-
   return (
     <InventoryContext.Provider
       value={{
@@ -178,11 +133,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         categories,
         getItem,
         addItem,
-        updateItem,
         deleteItem,
-        addCategory,
-        updateCategory,
-        deleteCategory,
+        restoreItem,
       }}
     >
       {children}

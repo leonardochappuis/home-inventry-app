@@ -24,10 +24,10 @@ export function DatePicker({ date, onSelect, placeholder = "Pick a date", disabl
           <Button
             type="button"
             variant="outline"
-            className={`w-full h-10 px-3 py-2 text-left font-normal flex justify-between items-center ${!date ? "text-muted-foreground" : ""}`}
+            className={`w-full h-10 px-3 py-2 text-left font-normal flex items-center ${!date ? "text-muted-foreground" : ""}`}
           >
+            <CalendarIcon className="h-4 w-4 opacity-50 mr-2" />
             {date ? format(date, "PPP") : <span>{placeholder}</span>}
-            <CalendarIcon className="h-4 w-4 opacity-50 ml-auto" />
           </Button>
         </div>
       </PopoverTrigger>
@@ -40,7 +40,7 @@ export function DatePicker({ date, onSelect, placeholder = "Pick a date", disabl
             setOpen(false)
           }}
           disabled={disabled}
-          initialFocus
+          autoFocus
         />
       </PopoverContent>
     </Popover>

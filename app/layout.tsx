@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Home Inventory System (Next.js 14)",
   description: "Track and manage your home inventory for insurance purposes",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -29,6 +29,10 @@ export default function RootLayout({
     </html>
   )
 }
+
+import "./globals.css"
+
+import "./globals.css"
 
 
 

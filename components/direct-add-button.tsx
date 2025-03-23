@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
@@ -12,12 +12,16 @@ interface DirectAddButtonProps {
 }
 
 export function DirectAddButton({ className, variant = "default", children }: DirectAddButtonProps) {
+  const router = useRouter()
+
+  const handleClick = () => {
+    router.push("/items/add")
+  }
+
   return (
-    <Button className={className} variant={variant} asChild>
-      <Link href="/items/add">
-        <Plus className="mr-2 h-4 w-4" />
-        {children || "Add Item"}
-      </Link>
+    <Button className={className} variant={variant} onClick={handleClick}>
+      <Plus className="mr-2 h-4 w-4" />
+      {children || "Add Item"}
     </Button>
   )
 }
