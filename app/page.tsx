@@ -17,15 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Trash, Plus } from "lucide-react"
+import { Trash, Plus, Pencil } from "lucide-react"
 import { useInventory } from "@/lib/inventory-context"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import type { Item } from "@/lib/types"
 import { useRouter } from "next/navigation"
 
 export default function Dashboard() {
   const { items, deleteItem, restoreItem } = useInventory()
-  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -67,24 +66,17 @@ export default function Dashboard() {
         setItemToDelete(null)
         setIsDeleteDialogOpen(false)
 
-        toast({
-          title: "Item deleted",
+        toast("Item deleted", {
           description: "The item has been deleted successfully.",
-          action: (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                restoreItem(itemToRestore)
-                toast({
-                  title: "Item restored",
-                  description: "The item has been restored successfully.",
-                })
-              }}
-            >
-              Undo
-            </Button>
-          ),
+          action: {
+            label: "Undo",
+            onClick: () => {
+              restoreItem(itemToRestore)
+              toast("Item restored", {
+                description: "The item has been restored successfully.",
+              })
+            },
+          },
         })
       }
     }
@@ -167,7 +159,19 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full bg-background"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        router.push(`/items/${item.id}/edit`)
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="destructive"
                       size="icon"

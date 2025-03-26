@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,10 +16,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ArrowLeft, Trash, CalendarIcon, DollarSign, Tag } from "lucide-react"
+import { ArrowLeft, Trash, CalendarIcon, DollarSign, Tag, Pencil } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { useInventory } from "@/lib/inventory-context"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
+import { ImageGallery } from "@/components/image-gallery"
 
 export default function ItemDetailPage() {
   // Get the item ID directly from params
@@ -29,7 +29,6 @@ export default function ItemDetailPage() {
 
   const router = useRouter()
   const { getItem, deleteItem, restoreItem } = useInventory()
-  const { toast } = useToast()
   const [item, setItem] = useState<Item | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
@@ -49,24 +48,17 @@ export default function ItemDetailPage() {
       deleteItem(itemId)
       setIsDeleteDialogOpen(false)
 
-      toast({
-        title: "Item deleted",
+      toast("Item deleted", {
         description: "The item has been deleted successfully.",
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              restoreItem(deletedItem)
-              toast({
-                title: "Item restored",
-                description: "The item has been restored successfully.",
-              })
-            }}
-          >
-            Undo
-          </Button>
-        ),
+        action: {
+          label: "Undo",
+          onClick: () => {
+            restoreItem(deletedItem)
+            toast("Item restored", {
+              description: "The item has been restored successfully.",
+            })
+          },
+        },
       })
 
       router.push("/")
@@ -103,14 +95,20 @@ export default function ItemDetailPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Link href="/" passHref>
-              <Button variant="outline" size="icon">
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="outline" size="icon" className="h-10 w-10 sm:h-9 sm:w-9">
+                <ArrowLeft className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="sr-only">Back</span>
               </Button>
             </Link>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{item.name}</h1>
           </div>
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="flex-1 sm:flex-none" asChild>
+              <Link href={`/items/${itemId}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
             <Button variant="destructive" className="flex-1 sm:flex-none" onClick={() => setIsDeleteDialogOpen(true)}>
               <Trash className="mr-2 h-4 w-4" />
               Delete
@@ -229,32 +227,8 @@ export default function ItemDetailPage() {
 
           {/* Images section - moved down for mobile */}
           <div className="space-y-6 order-2 md:order-1">
-            <div className="relative aspect-video overflow-hidden rounded-lg">
-              <Image src={item.images[0] || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-            </div>
-            {item.images.length > 1 && (
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                {item.images.slice(1).map((image, index) => (
-                  <div key={index} className="relative aspect-square overflow-hidden rounded-lg">
-                    <Image
-                      src={image || "/placeholder.svg"}
-                      alt={`${item.name} - Image ${index + 2}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            <ImageGallery images={item.images} alt={item.name} />
           </div>
-        </div>
-
-        {/* Delete button at the bottom for mobile */}
-        <div className="mt-6 sm:hidden">
-          <Button variant="destructive" className="w-full" onClick={() => setIsDeleteDialogOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" />
-            Delete Item
-          </Button>
         </div>
 
         {/* Delete confirmation dialog */}

@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
+import type { Item } from "@/lib/types"
 
 // Placeholder images for different categories
 const placeholderImages = {
@@ -60,11 +62,15 @@ const placeholderImages = {
   ],
 }
 
-export default function AddItemPage() {
+export default function EditItemPage() {
+  const params = useParams()
+  const itemId = Array.isArray(params.id) ? params.id[0] : params.id || ""
+
   const router = useRouter()
-  const { addItem, categories } = useInventory()
+  const { getItem, updateItem, categories } = useInventory()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [item, setItem] = useState<Item | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [showPlaceholders, setShowPlaceholders] = useState(false)
@@ -89,6 +95,40 @@ export default function AddItemPage() {
       notes: "",
     },
   })
+
+  // Fetch item data and populate form
+  useEffect(() => {
+    const fetchedItem = getItem(itemId)
+    if (fetchedItem) {
+      setItem(fetchedItem)
+      setImages(fetchedItem.images)
+      setSelectedCategory(
+        Object.keys(placeholderImages).includes(fetchedItem.category)
+          ? (fetchedItem.category as keyof typeof placeholderImages)
+          : "Default",
+      )
+
+      // Set form values
+      form.reset({
+        name: fetchedItem.name,
+        category: fetchedItem.category,
+        description: fetchedItem.description || "",
+        purchaseDate: fetchedItem.purchaseDate,
+        purchasePrice: fetchedItem.purchasePrice,
+        currentValue: fetchedItem.currentValue,
+        location: fetchedItem.location || "",
+        serialNumber: fetchedItem.serialNumber || "",
+        model: fetchedItem.model || "",
+        warrantyProvider: fetchedItem.warranty?.provider || "",
+        warrantyExpiry: fetchedItem.warranty?.expiryDate || "",
+        warrantyDetails: fetchedItem.warranty?.details || "",
+        notes: fetchedItem.notes || "",
+      })
+    } else {
+      // If item not found, redirect to home page
+      router.push("/")
+    }
+  }, [itemId, getItem, router, form])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -138,6 +178,8 @@ export default function AddItemPage() {
   }
 
   const onSubmit = (data: ItemFormValues) => {
+    if (!item) return
+
     // Create warranty object only if any warranty field has a value
     const warranty =
       data.warrantyProvider || data.warrantyExpiry || data.warrantyDetails
@@ -148,8 +190,9 @@ export default function AddItemPage() {
           }
         : undefined
 
-    // Create new item object
-    const newItem = {
+    // Create updated item object
+    const updatedItem = {
+      ...item,
       name: data.name,
       category: data.category,
       description: data.description || "",
@@ -162,30 +205,39 @@ export default function AddItemPage() {
       warranty,
       notes: data.notes || "",
       images: images.length > 0 ? images : ["/placeholder.svg?height=400&width=600&text=No+Image"],
+      timestamp: new Date().toISOString(), // Update timestamp
     }
 
-    // Add the item
-    const id = addItem(newItem)
+    // Update the item
+    updateItem(itemId, updatedItem)
 
-    toast.success("Item added successfully")
+    toast.success("Item updated successfully")
 
     // Navigate to the item detail page
     setTimeout(() => {
-      router.push(`/items/${id}`)
+      router.push(`/items/${itemId}`)
     }, 100)
+  }
+
+  if (!item) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    )
   }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
-          <Link href="/" passHref>
+          <Link href={`/items/${itemId}`} passHref>
             <Button variant="outline" size="icon" className="h-10 w-10 sm:h-9 sm:w-9">
               <ArrowLeft className="h-5 w-5 sm:h-4 sm:w-4" />
               <span className="sr-only">Back</span>
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Add New Item</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Item</h1>
         </div>
 
         <Form {...form}>
@@ -194,7 +246,7 @@ export default function AddItemPage() {
               <Card className="order-2 md:order-1">
                 <CardHeader>
                   <CardTitle>Item Details</CardTitle>
-                  <CardDescription>Enter the details of your item</CardDescription>
+                  <CardDescription>Edit the details of your item</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -223,6 +275,7 @@ export default function AddItemPage() {
                             setSelectedCategory(value as keyof typeof placeholderImages)
                           }}
                           defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -585,9 +638,9 @@ export default function AddItemPage() {
 
             <div className="mt-6 flex justify-end gap-4">
               <Button variant="outline" type="button" asChild>
-                <Link href="/">Cancel</Link>
+                <Link href={`/items/${itemId}`}>Cancel</Link>
               </Button>
-              <Button type="submit">Save Item</Button>
+              <Button type="submit">Save Changes</Button>
             </div>
           </form>
         </Form>

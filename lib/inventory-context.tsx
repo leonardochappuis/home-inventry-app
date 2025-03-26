@@ -41,6 +41,7 @@ const initialItems = [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=400&width=600",
     ],
+    timestamp: new Date().toISOString(),
   },
   {
     id: "2",
@@ -51,6 +52,7 @@ const initialItems = [
     currentValue: 1000,
     location: "Living Room",
     images: ["/placeholder.svg?height=200&width=200"],
+    timestamp: new Date().toISOString(),
   },
   {
     id: "3",
@@ -61,6 +63,7 @@ const initialItems = [
     currentValue: 1500,
     location: "Living Room",
     images: ["/placeholder.svg?height=200&width=200"],
+    timestamp: new Date().toISOString(),
   },
 ]
 
@@ -69,6 +72,7 @@ interface InventoryContextType {
   categories: Category[]
   getItem: (id: string) => Item | undefined
   addItem: (item: Omit<Item, "id">) => string
+  updateItem: (id: string, item: Item) => void
   deleteItem: (id: string) => void
   restoreItem: (item: Item) => void
 }
@@ -90,13 +94,32 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   const addItem = (item: Omit<Item, "id">) => {
     const id = `item-${Date.now()}`
-    const newItem = { ...item, id } as Item
+    const newItem = {
+      ...item,
+      id,
+      timestamp: new Date().toISOString(),
+    } as Item
+
     setItems((prev) => [...prev, newItem])
 
     // Update the item count for the category
     updateCategoryItemCount(item.category, 1)
 
     return id
+  }
+
+  const updateItem = (id: string, updatedItem: Item) => {
+    const existingItem = items.find((item) => item.id === id)
+
+    if (existingItem) {
+      // If category changed, update category counts
+      if (existingItem.category !== updatedItem.category) {
+        updateCategoryItemCount(existingItem.category, -1)
+        updateCategoryItemCount(updatedItem.category, 1)
+      }
+
+      setItems((prev) => prev.map((item) => (item.id === id ? updatedItem : item)))
+    }
   }
 
   const deleteItem = (id: string) => {
@@ -112,8 +135,22 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   }
 
   const restoreItem = (item: Item) => {
-    // Add the item back to the list
-    setItems((prev) => [...prev, item])
+    // Add the item back to the list, preserving its original position
+    setItems((prev) => {
+      // Create a new array with the restored item
+      const newItems = [...prev, item]
+
+      // Sort items by their ID to maintain original order
+      // This works because our IDs are timestamp-based (item-{timestamp})
+      return newItems.sort((a, b) => {
+        // Extract the numeric part from the ID for comparison
+        const aId = a.id.startsWith("item-") ? Number.parseInt(a.id.substring(5)) : Number.parseInt(a.id)
+        const bId = b.id.startsWith("item-") ? Number.parseInt(b.id.substring(5)) : Number.parseInt(b.id)
+
+        // Sort in ascending order (oldest first)
+        return aId - bId
+      })
+    })
 
     // Update the category count
     updateCategoryItemCount(item.category, 1)
@@ -133,6 +170,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         categories,
         getItem,
         addItem,
+        updateItem,
         deleteItem,
         restoreItem,
       }}

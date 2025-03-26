@@ -12,6 +12,7 @@ export interface Item {
   warranty?: Warranty
   notes?: string
   images: string[]
+  timestamp?: string
 }
 
 export interface Warranty {

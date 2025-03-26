@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { InventoryProvider } from "@/lib/inventory-context"
-import { Toaster } from "@/components/toaster"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,16 +23,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <InventoryProvider>
           {children}
-          <Toaster />
+          <Toaster position="bottom-right" />
         </InventoryProvider>
       </body>
     </html>
   )
 }
-
-import "./globals.css"
-
-import "./globals.css"
 
 
 
