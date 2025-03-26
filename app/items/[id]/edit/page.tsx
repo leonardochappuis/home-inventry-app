@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, X, Camera, Image } from "lucide-react"
+import { ArrowLeft, X, Image } from "lucide-react"
 import { useInventory } from "@/lib/inventory-context"
 import { toast } from "sonner"
 import { itemFormSchema, type ItemFormValues } from "@/lib/validations/item"
@@ -75,8 +75,6 @@ export default function EditItemPage() {
   const [item, setItem] = useState<Item | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
-  const [showPlaceholders, setShowPlaceholders] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<keyof typeof placeholderImages>("Default")
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<ItemFormValues>({
@@ -104,11 +102,6 @@ export default function EditItemPage() {
     if (fetchedItem) {
       setItem(fetchedItem)
       setImages(fetchedItem.images)
-      setSelectedCategory(
-        Object.keys(placeholderImages).includes(fetchedItem.category)
-          ? (fetchedItem.category as keyof typeof placeholderImages)
-          : "Default",
-      )
 
       // Set form values
       form.reset({
@@ -166,13 +159,6 @@ export default function EditItemPage() {
     if (fileInputRef.current) {
       fileInputRef.current.click()
     }
-  }
-
-  const addPlaceholderImage = (image: string) => {
-    setImages((prev) => [...prev, image])
-    setShowPlaceholders(false)
-
-    toast.success("Placeholder image added")
   }
 
   const removeImage = (index: number) => {
@@ -274,7 +260,6 @@ export default function EditItemPage() {
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value)
-                            setSelectedCategory(value as keyof typeof placeholderImages)
                           }}
                           defaultValue={field.value}
                           value={field.value}
@@ -321,7 +306,7 @@ export default function EditItemPage() {
                             <Calendar
                               mode="single"
                               selected={field.value ? new Date(field.value) : undefined}
-                              onSelect={(date) => field.onChange(date ? date.toISOString().split("T")[0] : "")}
+                              onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
                               disabled={(date) => date > new Date()}
                               initialFocus
                             />
@@ -461,87 +446,55 @@ export default function EditItemPage() {
                     />
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                      {images.map((image, index) => (
-                        <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+                      {images.length > 0 ? (
+                        images.map((image, index) => (
+                          <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+                            <img
+                              src={image || "/placeholder.svg"}
+                              alt={`Item image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full"
+                              onClick={() => removeImage(index)}
+                              type="button"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 aspect-video rounded-md overflow-hidden border">
                           <img
-                            src={image || "/placeholder.svg"}
-                            alt={`Item image ${index + 1}`}
+                            src="/placeholder.svg?height=400&width=600&text=No+Image"
+                            alt="Default placeholder"
                             className="w-full h-full object-cover"
                           />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6 rounded-full"
-                            onClick={() => removeImage(index)}
-                            type="button"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
                         </div>
-                      ))}
+                      )}
                     </div>
 
-                    {showPlaceholders ? (
-                      <div className="space-y-4">
-                        <h3 className="font-medium text-sm">Select a placeholder image:</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          {placeholderImages[selectedCategory].map((image, index) => (
-                            <div
-                              key={index}
-                              className="relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:border-primary"
-                              onClick={() => addPlaceholderImage(image)}
-                            >
-                              <img
-                                src={image || "/placeholder.svg"}
-                                alt={`Placeholder ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-16 border-dashed"
+                      onClick={triggerFileInput}
+                      disabled={uploading}
+                    >
+                      {uploading ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                          Uploading...
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => setShowPlaceholders(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 h-16 border-dashed"
-                          onClick={triggerFileInput}
-                          disabled={uploading}
-                        >
-                          {uploading ? (
-                            <div className="flex items-center">
-                              <div className="animate-spin mr-2 h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                              Uploading...
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center">
-                              <Image className="h-5 w-5 mb-1" />
-                              <span className="text-sm">Upload from Device</span>
-                            </div>
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 h-16 border-dashed"
-                          onClick={() => setShowPlaceholders(true)}
-                        >
-                          <div className="flex flex-col items-center">
-                            <Camera className="h-5 w-5 mb-1" />
-                            <span className="text-sm">Use Placeholder</span>
-                          </div>
-                        </Button>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Image className="h-5 w-5 mb-1" />
+                          <span className="text-sm">Upload Images</span>
+                        </div>
+                      )}
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -589,8 +542,7 @@ export default function EditItemPage() {
                               <Calendar
                                 mode="single"
                                 selected={field.value ? new Date(field.value) : undefined}
-                                onSelect={(date) => field.onChange(date ? date.toISOString().split("T")[0] : "")}
-                                autoFocus
+                                onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
                               />
                             </PopoverContent>
                           </Popover>
