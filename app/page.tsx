@@ -167,7 +167,7 @@ export default function Dashboard() {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        router.push(`/items/${item.id}/edit`)
+                        router.push(`/items/${item.id}/edit?from=dashboard`)
                       }}
                     >
                       <Pencil className="h-4 w-4" />

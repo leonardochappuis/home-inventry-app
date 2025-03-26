@@ -67,6 +67,8 @@ export default function EditItemPage() {
   const itemId = Array.isArray(params.id) ? params.id[0] : params.id || ""
 
   const router = useRouter()
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
+  const fromPage = searchParams.get("from")
   const { getItem, updateItem, categories } = useInventory()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -231,7 +233,7 @@ export default function EditItemPage() {
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
-          <Link href={`/items/${itemId}`} passHref>
+          <Link href={fromPage === "dashboard" ? "/" : `/items/${itemId}`} passHref>
             <Button variant="outline" size="icon" className="h-10 w-10 sm:h-9 sm:w-9">
               <ArrowLeft className="h-5 w-5 sm:h-4 sm:w-4" />
               <span className="sr-only">Back</span>
@@ -588,7 +590,6 @@ export default function EditItemPage() {
                                 mode="single"
                                 selected={field.value ? new Date(field.value) : undefined}
                                 onSelect={(date) => field.onChange(date ? date.toISOString().split("T")[0] : "")}
-                                autoFocus
                               />
                             </PopoverContent>
                           </Popover>

@@ -104,7 +104,7 @@ export default function ItemDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" className="flex-1 sm:flex-none" asChild>
-              <Link href={`/items/${itemId}/edit`}>
+              <Link href={`/items/${itemId}/edit?from=item`}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </Link>
