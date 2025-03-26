@@ -590,6 +590,7 @@ export default function EditItemPage() {
                                 mode="single"
                                 selected={field.value ? new Date(field.value) : undefined}
                                 onSelect={(date) => field.onChange(date ? date.toISOString().split("T")[0] : "")}
+                                autoFocus
                               />
                             </PopoverContent>
                           </Popover>
@@ -639,7 +640,7 @@ export default function EditItemPage() {
 
             <div className="mt-6 flex justify-end gap-4">
               <Button variant="outline" type="button" asChild>
-                <Link href={`/items/${itemId}`}>Cancel</Link>
+                <Link href={fromPage === "dashboard" ? "/" : `/items/${itemId}`}>Cancel</Link>
               </Button>
               <Button type="submit">Save Changes</Button>
             </div>
